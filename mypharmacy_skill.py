@@ -1,3 +1,15 @@
+import boto3
+
+def get_drug_info(drug):
+    client = boto3.client('dynamodb')
+    tablename = "mypharmacy_drugs"
+    key = {
+        "drugname": {
+            "S": drug
+        }
+    }
+
+    return client.get_item(Key=key, TableName=tablename)
 
 # --------------- Helpers that build all of the responses ----------------------
 
@@ -39,8 +51,7 @@ def get_welcome_response():
 
     session_attributes = {}
     card_title = "Welcome"
-    speech_output = "Welcome to the My Pharmacy skill. " \
-                    "Ask about any popular medicine to learn more about it like, " \
+    speech_output = "Ask about any popular medicine to learn more about it like, " \
                     "Tell me about advil"
     # If the user either does not reply to the welcome message or says something
     # that is not understood, they will be prompted again with this text.
@@ -57,8 +68,7 @@ def get_welcome_response():
 
 def handle_session_end_request():
     card_title = "Session Ended"
-    speech_output = "Thank you for trying the My Pharmacy skill. " \
-                    "Have a nice day! "
+    speech_output = None
     # Setting this to true ends the session and exits the skill.
     should_end_session = True
     return build_response({}, build_speechlet_response(
@@ -68,35 +78,6 @@ def handle_session_end_request():
 def create_drug_attributes(drug):
     return {"drug": drug}
 
-
-def set_drug_in_session(intent, session): #probably don't need to use this
-    """ Sets the drug in the session and prepares the speech to reply to the
-    user.
-    """
-
-    card_title = intent['name']
-    session_attributes = {}
-    should_end_session = False
-
-    if 'drug' in intent['slots']:
-        drug = intent['slots']['drug']['value']
-        drug_info = "Advil is a drug to treat pain."
-        session_attributes = create_drug_attributes(drug)
-        speech_output = "Here's what I know about " + \
-                        drug \
-                        drug_info # will be a dynamo db call
-        reprompt_text = "You can ask me about any popular medicine like, " \
-                        "what's advil?"
-    else:
-        speech_output = "I'm not sure what that medicine is. " \
-                        "Please try again."
-        reprompt_text = "I'm not sure what that medicine is. " \
-                        "You can ask me about any popular medicine like, " \
-                        "what's advil?"
-    return build_response(session_attributes, build_speechlet_response(
-        card_title, speech_output, reprompt_text, should_end_session))
-
-
 def get_drug_from_session(intent, session): #get drug from session
     session_attributes = {}
     reprompt_text = None
@@ -105,10 +86,12 @@ def get_drug_from_session(intent, session): #get drug from session
 
     if 'drug' in intent['slots']:
         drug = intent['slots']['drug']['value']
-        drug_info = drug + " is a drug to treat pain."
+        print("heard 'drug' as " + drug)
+        drug_response = get_drug_info(drug)
+        drug_info = drug_response['Item']['info']['S']
         session_attributes = create_drug_attributes(drug)
-        speech_output = drug_info # will be a dynamo db call
-        reprompt_text = "Is there anything else you'd like to know about " + drug
+        speech_output = drug_info 
+        reprompt_text = "is there anything else you'd like to know about " + drug
     else:
         speech_output = "I'm not sure what that medicine is. " \
                         "Please try again."
