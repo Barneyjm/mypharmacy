@@ -83,8 +83,7 @@ def set_drug_in_session(intent, session): #probably don't need to use this
         drug_info = "Advil is a drug to treat pain."
         session_attributes = create_drug_attributes(drug)
         speech_output = "Here's what I know about " + \
-                        drug + \
-                        "." + \
+                        drug \
                         drug_info # will be a dynamo db call
         reprompt_text = "You can ask me about any popular medicine like, " \
                         "what's advil?"
@@ -108,12 +107,8 @@ def get_drug_from_session(intent, session): #get drug from session
         drug = intent['slots']['drug']['value']
         drug_info = drug + " is a drug to treat pain."
         session_attributes = create_drug_attributes(drug)
-        speech_output = "Here's what I know about " + \
-                        drug + \
-                        "." + \
-                        drug_info # will be a dynamo db call
-        reprompt_text = "You can ask me about any popular medicine like, " \
-                        "what's advil?"
+        speech_output = drug_info # will be a dynamo db call
+        reprompt_text = "Is there anything else you'd like to know about " + drug
     else:
         speech_output = "I'm not sure what that medicine is. " \
                         "Please try again."
